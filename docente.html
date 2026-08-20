@@ -3,6 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <title>U-Cursos - Portal Docente & Tutor Clínico</title>
+    <script>
+        if (sessionStorage.getItem('userRole') !== 'docente') {
+            window.location.href = 'index.html';
+        }
+        function cerrarSesion() {
+            sessionStorage.clear();
+            window.location.href = 'index.html';
+        }
+    </script>
     <style>
         body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f5f7; color: #333; }
         .header { background: #1a365d; color: white; padding: 12px 24px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
@@ -10,7 +19,6 @@
         .user-info { font-size: 13px; }
         .container { display: flex; }
         
-        /* Sidebar */
         .sidebar { width: 220px; background: #fff; border-right: 1px solid #e0e0e0; min-height: 100vh; padding: 15px 10px; }
         .sidebar ul { padding: 0; margin: 0; list-style: none; }
         .sidebar li { padding: 10px 12px; color: #4a5568; font-size: 13px; border-radius: 4px; margin-bottom: 3px; cursor: pointer; }
@@ -18,12 +26,10 @@
         .sidebar li.active { background: #ebf8ff; color: #2b6cb0; font-weight: bold; border-left: 3px solid #2b6cb0; }
         .badge-count { background: #e53e3e; color: white; border-radius: 10px; padding: 2px 6px; font-size: 10px; float: right; }
 
-        /* Main Content */
         .main { flex: 1; padding: 25px 35px; }
         .page-title { color: #1a202c; font-size: 22px; font-weight: bold; margin-bottom: 4px; }
         .page-subtitle { color: #718096; font-size: 13px; margin-bottom: 20px; }
 
-        /* Quick Stats */
         .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 25px; }
         .stat-card { background: white; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0; border-left: 4px solid #3182ce; }
         .stat-card.alert { border-left-color: #dd6b20; }
@@ -31,13 +37,11 @@
         .stat-num { font-size: 22px; font-weight: bold; color: #2d3748; }
         .stat-label { font-size: 11px; color: #718096; text-transform: uppercase; font-weight: 600; }
 
-        /* Layout Grid */
         .content-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
         .card { background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; margin-bottom: 20px; }
         .card-header-flex { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #edf2f7; padding-bottom: 10px; margin-bottom: 15px; }
         .card-title { font-size: 14px; font-weight: bold; color: #2d3748; margin: 0; }
 
-        /* Tabla de Internos */
         .intern-table { width: 100%; border-collapse: collapse; font-size: 12px; }
         .intern-table th { text-align: left; padding: 10px; background: #f8fafc; color: #4a5568; border-bottom: 2px solid #e2e8f0; }
         .intern-table td { padding: 10px; border-bottom: 1px solid #edf2f7; vertical-align: middle; }
@@ -48,7 +52,6 @@
         .btn-evaluate { background: #3182ce; color: white; border: none; padding: 5px 10px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 11px; }
         .btn-evaluate:hover { background: #2b6cb0; }
 
-        /* Bandeja de Solicitudes PEI */
         .request-item { background: #fffaf0; border: 1px solid #feebc8; border-radius: 6px; padding: 12px; margin-bottom: 10px; }
         .request-header { display: flex; justify-content: space-between; font-weight: bold; font-size: 12px; color: #9c4221; margin-bottom: 4px; }
         .request-body { font-size: 11px; color: #4a5568; line-height: 1.4; margin-bottom: 8px; }
@@ -56,7 +59,6 @@
         .btn-accept { background: #38a169; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 11px; cursor: pointer; }
         .btn-reject { background: #e2e8f0; color: #4a5568; border: none; padding: 4px 8px; border-radius: 3px; font-size: 11px; cursor: pointer; }
 
-        /* MODAL DE EVALUACIÓN RÁPIDA */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
         .modal-content { background: white; border-radius: 10px; width: 620px; max-width: 90%; padding: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
         .close-btn { float: right; font-size: 20px; cursor: pointer; color: #a0aec0; }
@@ -73,11 +75,10 @@
 
     <div class="header">
         <h1>👨‍⚕️ U-Cursos | Portal de Tutoría Clínica (Medicina Interna)</h1>
-        <div class="user-info">Dr. Silva (Tutor de Sala) | <a href="#" style="color:white; text-decoration:underline;">Cambiar Rol</a></div>
+        <div class="user-info">Dr. Silva (Tutor de Sala) | <a href="#" onclick="cerrarSesion()" style="color:white; text-decoration:underline; cursor:pointer;">Cerrar Sesión</a></div>
     </div>
 
     <div class="container">
-        <!-- Sidebar Docente -->
         <div class="sidebar">
             <ul>
                 <li class="active">📊 Panel de la Cohorte</li>
@@ -89,12 +90,10 @@
             </ul>
         </div>
 
-        <!-- Dashboard Docente -->
         <div class="main">
             <div class="page-title">Supervisión de Internos en Sala</div>
             <div class="page-subtitle">Sala de Cardiología / Medicina Interna — Hospital Clínico</div>
 
-            <!-- Métricas Clave de la Cohorte -->
             <div class="stats-grid">
                 <div class="stat-card">
                     <div class="stat-num">8</div>
@@ -115,7 +114,6 @@
             </div>
 
             <div class="content-grid">
-                <!-- Columna Izquierda: Matriz de Alumnos -->
                 <div>
                     <div class="card">
                         <div class="card-header-flex">
@@ -160,14 +158,12 @@
                     </div>
                 </div>
 
-                <!-- Columna Derecha: Bandeja PEI & Acciones Rápidas -->
                 <div>
                     <div class="card">
                         <div class="card-header-flex">
                             <h3 class="card-title">SOLICITUDES DE REFUERZO (PEI)</h3>
                         </div>
 
-                        <!-- Solicitud 1 -->
                         <div class="request-item">
                             <div class="request-header">
                                 <span>Pedro Martínez</span>
@@ -183,14 +179,13 @@
                             </div>
                         </div>
 
-                        <!-- Solicitud 2 -->
                         <div class="request-item">
                             <div class="request-header">
                                 <span>Camila Sepúlveda</span>
                                 <span style="font-size:10px; color:#c05621;">Procedimientos</span>
                             </div>
                             <div class="request-body">
-                                <b>Modalidad:</b> Tutoría focalizada en Punción Lumbar / Paracentesis.
+                                <b>Modalidad:</b> Tutoría focalizada en Punción Lumbar.
                             </div>
                             <div class="action-btns">
                                 <button class="btn-accept" onclick="alert('Cupo agendado.')">Aceptar Cupo</button>
@@ -203,7 +198,7 @@
         </div>
     </div>
 
-    <!-- MODAL DE MICRO-EVALUACIÓN RÁPIDA -->
+    <!-- Modal de Evaluación Rápida -->
     <div class="modal-overlay" id="evalModal">
         <div class="modal-content">
             <span class="close-btn" onclick="closeEvalModal()">&times;</span>
@@ -256,9 +251,7 @@
             document.getElementById('feedbackText').value = '';
             document.getElementById('evalModal').style.display = 'flex';
         }
-        function closeEvalModal() {
-            document.getElementById('evalModal').style.display = 'none';
-        }
+        function closeEvalModal() { document.getElementById('evalModal').style.display = 'none'; }
         function addFeedback(text) {
             const area = document.getElementById('feedbackText');
             area.value = area.value ? area.value + ' ' + text : text;
@@ -269,7 +262,7 @@
             btn.classList.add('active');
         }
         function saveEvaluation() {
-            alert('✅ Evaluación guardada. La barra de progreso y las insignias del estudiante se actualizaron automáticamente.');
+            alert('✅ Evaluación guardada exitosamente.');
             closeEvalModal();
         }
     </script>
