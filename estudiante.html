@@ -29,7 +29,7 @@
         .sidebar li.reinforcement-item:hover { background: #e0e7ff; }
 
         .unlocked-panel { display: none; background: #f8fafc; border: 1px solid #cbd5e0; border-radius: 6px; padding: 10px; margin-top: 10px; animation: slideDown 0.3s ease-out; }
-        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; border-color: #3182ce; } }
         .unlocked-title { font-size: 11px; font-weight: bold; color: #2d3748; text-transform: uppercase; margin-bottom: 8px; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; }
         .opt-card { background: #ebf8ff; border-left: 3px solid #3182ce; padding: 6px; margin-bottom: 6px; border-radius: 3px; font-size: 11px; cursor: pointer; transition: transform 0.1s; }
         .opt-card:hover { transform: scale(1.02); background: #bee3f8; }
@@ -70,7 +70,7 @@
 
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
         .modal-content { background: white; border-radius: 10px; width: 600px; max-width: 90%; padding: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); position: relative; animation: fadeIn 0.2s ease-out; max-height: 85vh; overflow-y: auto; }
-        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; } }
         .close-btn { position: absolute; top: 15px; right: 15px; font-size: 20px; font-weight: bold; cursor: pointer; color: #a0aec0; }
         .close-btn:hover { color: #2d3748; }
         .modal-header { font-size: 18px; font-weight: bold; color: #2d3748; border-bottom: 2px solid #edf2f7; padding-bottom: 10px; margin-bottom: 15px; }
@@ -261,7 +261,6 @@
         </div>
     </div>
 
-    <!-- Modales -->
     <div class="modal-overlay" id="modalOverlay">
         <div class="modal-content">
             <span class="close-btn" onclick="closeModal()">&times;</span>
@@ -317,7 +316,7 @@
                     </div>
                     <div class="week-subtext">Temas: Artritis Reumatoide, Lupus Eritematoso Sistémico (LES).</div>
                     <div class="week-detail" id="w4">
-                        <b>🎯 Objetivo de Rotación:</b> Examen físico articular estructurado, interpretación de perfil inmunológico (ANA, ENA, FR, anti-CCP) y uso de inmunosupresores.
+                        <b>🎯 Objetivo de Rotación:</b> Examen físico articular structured, interpretación de perfil inmunológico (ANA, ENA, FR, anti-CCP) y uso de inmunosupresores.
                     </div>
                 </div>
             </div>
