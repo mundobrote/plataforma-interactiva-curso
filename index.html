@@ -1,585 +1,99 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <title>U-Cursos - Rotación de Internado de Medicina Interna</title>
-    <style>
-        body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f5f7; color: #333; }
-        .header { background: #b71c1c; color: white; padding: 12px 24px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
-        .header h1 { margin: 0; font-size: 18px; font-weight: 600; }
-        .user-info { font-size: 14px; }
-        .container { display: flex; }
-        
-        /* Sidebar Principal */
-        .sidebar { width: 230px; background: #fff; border-right: 1px solid #e0e0e0; min-height: 100vh; padding: 15px 10px; display: flex; flex-direction: column; justify-content: space-between; }
-        .sidebar ul { padding: 0; margin: 0; }
-        .sidebar li { list-style: none; padding: 9px 12px; color: #555; font-size: 13px; border-radius: 4px; margin-bottom: 2px; cursor: pointer; transition: background 0.2s; }
-        .sidebar li:hover { background: #f0f0f0; }
-        .sidebar li.active { background: #ffebee; color: #b71c1c; font-weight: bold; }
-        .sidebar li.unlocked-item { background: #e6fffa; color: #234e52; font-weight: bold; border: 1px dashed #319795; margin-top: 10px; }
-        
-        /* Ítem de Reforzamiento en Sidebar */
-        .sidebar li.reinforcement-item { background: #eef2ff; color: #3730a3; font-weight: bold; border: 1px solid #c7d2fe; margin-top: 6px; }
-        .sidebar li.reinforcement-item:hover { background: #e0e7ff; }
-
-        /* Panel Lateral Unlocked (Oculto por defecto) */
-        .unlocked-panel { display: none; background: #f8fafc; border: 1px solid #cbd5e0; border-radius: 6px; padding: 10px; margin-top: 10px; animation: slideDown 0.3s ease-out; }
-        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-        .unlocked-title { font-size: 11px; font-weight: bold; color: #2d3748; text-transform: uppercase; margin-bottom: 8px; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; }
-        .opt-card { background: #ebf8ff; border-left: 3px solid #3182ce; padding: 6px; margin-bottom: 6px; border-radius: 3px; font-size: 11px; cursor: pointer; transition: transform 0.1s; }
-        .opt-card:hover { transform: scale(1.02); background: #bee3f8; }
-        .opt-card strong { color: #2b6cb0; display: block; }
-        .opt-card-locked { background: #edf2f7; border-left: 3px solid #a0aec0; padding: 6px; border-radius: 3px; font-size: 10px; color: #718096; filter: grayscale(100%); }
-
-        /* Main Content */
-        .main { flex: 1; padding: 25px 35px; }
-        .page-title { color: #2c3e50; font-size: 24px; font-weight: bold; margin-bottom: 4px; }
-        .page-subtitle { color: #7f8c8d; font-size: 14px; margin-bottom: 20px; }
-        
-        .dashboard { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
-        .card { background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); border: 1px solid #e2e8f0; margin-bottom: 20px; }
-        .card-title { font-size: 15px; font-weight: bold; color: #1a202c; border-bottom: 2px solid #edf2f7; padding-bottom: 10px; margin-top: 0; margin-bottom: 15px; }
-        
-        /* Grid de Insignias Interactiva */
-        .badge-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .badge-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; text-align: center; position: relative; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
-        .badge-card:hover { transform: translateY(-3px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-color: #3182ce; }
-        .click-hint { font-size: 10px; color: #3182ce; font-weight: bold; display: block; margin-top: 6px; text-decoration: underline; }
-        
-        .badge-tag { position: absolute; top: 8px; right: 8px; background: #e2e8f0; font-size: 10px; padding: 2px 6px; border-radius: 10px; font-weight: bold; }
-        .badge-icon { font-size: 32px; margin-bottom: 5px; }
-        .badge-name { font-weight: bold; font-size: 13px; color: #2d3748; display: block; margin-bottom: 8px; }
-        .progress-bar { background: #cbd5e0; height: 8px; border-radius: 4px; overflow: hidden; margin-bottom: 6px; }
-        .progress-fill { background: #38a169; height: 100%; }
-        .badge-status { font-size: 11px; color: #718096; }
-
-        /* Mentores */
-        .mentors-list { display: flex; gap: 10px; text-align: center; }
-        .mentor-item { flex: 1; background: #f7fafc; padding: 8px; border-radius: 6px; border: 1px solid #edf2f7; }
-        .mentor-avatar { width: 36px; height: 36px; border-radius: 50%; background: #3182ce; color: white; display: inline-flex; align-items: center; justify-content: center; font-weight: bold; font-size: 12px; margin-bottom: 4px; }
-        .mentor-name { font-size: 11px; font-weight: 600; display: block; color: #2d3748; }
-
-        /* Beneficios */
-        .benefits-list { list-style: none; padding: 0; margin: 0; }
-        .benefits-list li { padding: 10px 0; border-bottom: 1px solid #edf2f7; font-size: 12px; display: flex; align-items: center; justify-content: space-between; }
-        
-        /* Banner Calendario Generales */
-        .schedule-banner { background: #fffaf0; border: 1px solid #feebc8; border-left: 4px solid #dd6b20; border-radius: 6px; padding: 15px; margin-top: 10px; }
-        .schedule-header { font-weight: bold; color: #c05621; font-size: 14px; margin-bottom: 6px; }
-        .topic-tag { background: #feebc8; color: #9c4221; padding: 2px 6px; border-radius: 4px; font-weight: 600; font-size: 11px; }
-
-        /* MODALES */
-        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
-        .modal-content { background: white; border-radius: 10px; width: 600px; max-width: 90%; padding: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); position: relative; animation: fadeIn 0.2s ease-out; max-height: 85vh; overflow-y: auto; }
-        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
-        .close-btn { position: absolute; top: 15px; right: 15px; font-size: 20px; font-weight: bold; cursor: pointer; color: #a0aec0; }
-        .close-btn:hover { color: #2d3748; }
-        .modal-header { font-size: 18px; font-weight: bold; color: #2d3748; border-bottom: 2px solid #edf2f7; padding-bottom: 10px; margin-bottom: 15px; }
-        
-        /* Sub-skills e Ítems */
-        .sub-skill { margin-bottom: 12px; }
-        .sub-skill-header { display: flex; justify-content: space-between; font-size: 12px; font-weight: 600; margin-bottom: 4px; color: #4a5568; }
-        .sub-bar { height: 6px; background: #e2e8f0; border-radius: 3px; overflow: hidden; }
-        .sub-fill { height: 100%; background: #3182ce; }
-        .feedback-box { background: #f7fafc; border-left: 3px solid #3182ce; padding: 10px; font-size: 12px; color: #4a5568; border-radius: 4px; margin-top: 15px; }
-
-        /* Calendario Modal Estilo Google Calendar */
-        .calendar-grid { display: flex; flex-direction: column; gap: 10px; }
-        .calendar-week { border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px; background: #f8fafc; cursor: pointer; transition: all 0.2s; }
-        .calendar-week:hover { background: #ebf8ff; border-color: #3182ce; }
-        .week-title { font-weight: bold; font-size: 13px; color: #2b6cb0; display: flex; justify-content: space-between; }
-        .week-subtext { font-size: 11px; color: #4a5568; margin-top: 4px; }
-        .week-detail { display: none; margin-top: 8px; padding-top: 8px; border-top: 1px dashed #cbd5e0; font-size: 12px; color: #2d3748; background: #fff; padding: 8px; border-radius: 4px; }
-
-        /* Estilos Modal Reforzamiento */
-        .service-list { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
-        .service-card { background: #f8fafc; border: 1px solid #cbd5e0; border-radius: 6px; padding: 12px; cursor: pointer; transition: all 0.2s; text-align: left; }
-        .service-card:hover { background: #eef2ff; border-color: #4f46e5; transform: translateY(-2px); }
-        .service-card strong { color: #3730a3; font-size: 13px; display: block; margin-bottom: 4px; }
-        .service-card span { font-size: 11px; color: #6b7280; }
-
-        .disclaimer-box { background: #fffbe3; border: 1px solid #ffe58f; border-left: 4px solid #faad14; padding: 10px; border-radius: 4px; font-size: 11px; color: #8c6b00; margin-bottom: 15px; }
-        
-        .request-form { display: none; margin-top: 15px; background: #fafafa; padding: 15px; border-radius: 6px; border: 1px solid #e0e0e0; }
-        .request-form label { font-size: 12px; font-weight: bold; color: #333; display: block; margin-bottom: 5px; }
-        .request-form textarea, .request-form select { width: 100%; border: 1px solid #ccc; border-radius: 4px; padding: 8px; font-size: 12px; margin-bottom: 10px; box-sizing: border-box; }
-        .btn-submit { background: #3730a3; color: white; border: none; padding: 8px 14px; border-radius: 4px; font-size: 12px; font-weight: bold; cursor: pointer; }
-        .btn-submit:hover { background: #2e2882; }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Acceso U-Cursos | Facultad de Medicina</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body { min-height: 100vh; display: flex; flex-direction: column; justify-content: space-between; background: #eaedf1; color: #333; }
+    .top-bar { background: #b71c1c; color: #ffffff; padding: 14px 28px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15); }
+    .top-bar h1 { font-size: 19px; font-weight: 600; letter-spacing: 0.5px; }
+    .top-bar span { font-size: 13px; opacity: 0.9; }
+    .login-container { display: flex; justify-content: center; align-items: center; padding: 40px 20px; flex: 1; }
+    .login-card { background: #ffffff; width: 100%; max-width: 420px; padding: 35px 30px; border-radius: 8px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08); border-top: 4px solid #b71c1c; }
+    .card-header-area { text-align: center; margin-bottom: 25px; }
+    .card-header-area h2 { font-size: 20px; color: #1a202c; margin-bottom: 6px; }
+    .card-header-area p { font-size: 12px; color: #718096; }
+    .form-group { margin-bottom: 18px; text-align: left; }
+    .form-group label { display: block; font-size: 12px; font-weight: 600; color: #4a5568; margin-bottom: 6px; }
+    .form-group input { width: 100%; height: 42px; padding: 0 12px; font-size: 13px; border: 1px solid #cbd5e0; border-radius: 4px; outline: none; transition: border-color 0.2s, box-shadow 0.2s; }
+    .form-group input:focus { border-color: #b71c1c; box-shadow: 0 0 0 3px rgba(183, 28, 28, 0.15); }
+    .btn-submit { width: 100%; height: 44px; background: #b71c1c; color: #ffffff; border: none; border-radius: 4px; font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.2s; margin-top: 10px; }
+    .btn-submit:hover { background: #9a1515; }
+    .quick-access-box { margin-top: 25px; padding: 12px; border-top: 1px solid #e2e8f0; font-size: 11px; color: #718096; background: #f8fafc; border-radius: 6px; }
+    .quick-access-box strong { color: #2d3748; display: block; margin-bottom: 6px; }
+    .quick-btn { background: #edf2f7; border: 1px solid #cbd5e0; padding: 4px 8px; border-radius: 4px; font-size: 11px; cursor: pointer; margin-right: 5px; margin-top: 4px; }
+    .quick-btn:hover { background: #e2e8f0; }
+    .footer { text-align: center; padding: 15px; font-size: 12px; color: #a0aec0; background: #ffffff; border-top: 1px solid #e2e8f0; }
+  </style>
 </head>
 <body>
 
-    <div class="header">
-        <h1>U-Cursos | Medicina 2026</h1>
-        <div class="user-info">Paul Araneda G. | <a href="#" style="color:white; text-decoration:underline;">Salir</a></div>
-    </div>
+  <header class="top-bar">
+    <h1>U-Cursos | Plataforma de Internado Clínico</h1>
+    <span>Medicina 2026</span>
+  </header>
 
-    <div class="container">
-        <!-- Sidebar Principal -->
-        <div class="sidebar">
-            <div>
-                <ul>
-                    <li>Asistencias</li>
-                    <li onclick="openCalendarModal()" style="font-weight: bold; color: #2b6cb0;">📅 Calendario de Rotaciones</li>
-                    <li>Clase Virtual</li>
-                    <li class="active">Material Docente</li>
-                    <li>Presentación</li>
-                    <li>Notas y Acta</li>
-                    <li>Tareas</li>
-                    <li class="unlocked-item" onclick="toggleUnlockedPanel()">🔓 Actividades Desbloqueadas</li>
-                    <li class="reinforcement-item" onclick="openReinforcementModal()">🏥 Solicitud Reforzamiento Clínico</li>
-                </ul>
+  <main class="login-container">
+    <div class="login-card">
+      <div class="card-header-area">
+        <h2>Iniciar Sesión</h2>
+        <p>Ingresa con tu cuenta institucional de U-Cursos</p>
+      </div>
 
-                <!-- Panel Oculto que se despliega con Clic -->
-                <div class="unlocked-panel" id="unlockedPanel">
-                    <div class="unlocked-title">Proyectos Disponibles</div>
-                    
-                    <div class="opt-card" onclick="openModal('investigacion_silva')">
-                        <strong>Opción A (Investigación):</strong>
-                        Dr. Silva - Cardiología
-                    </div>
-                    
-                    <div class="opt-card" onclick="openModal('investigacion_martinez')">
-                        <strong>Opción B (Investigación):</strong>
-                        Dra. Martínez - Reumatología
-                    </div>
-
-                    <div class="opt-card" style="background:#f0fff4; border-left-color:#38a169;" onclick="openModal('ayudantia_morales')">
-                        <strong style="color:#276749;">Opción C (Ayudantía Docente):</strong>
-                        Dr. Morales - Resp. / Gastro
-                    </div>
-
-                    <div class="opt-card-locked">
-                        🔒 <strong>Taller de EKG Exclusivo</strong><br>
-                        <i>(Debes recibir logro de taller exclusivo para desbloquear)</i>
-                    </div>
-                </div>
-            </div>
+      <form id="loginForm" autocomplete="off">
+        <div class="form-group">
+          <label for="username">Usuario Institucional</label>
+          <input type="text" id="username" placeholder="ej: paul.araneda o docente" required autofocus />
         </div>
 
-        <!-- Área Principal -->
-        <div class="main">
-            <div class="page-title">Rotación de Internado de Medicina Interna</div>
-            <div class="page-subtitle">Prototipo Piloto: Plataforma DOCE-BADGES (Mentoría Gamificada)</div>
-
-            <div class="dashboard">
-                <div>
-                    <div class="card">
-                        <h3 class="card-title">PANEL DEL ESTUDIANTE: PEDRO MARTÍNEZ</h3>
-                        <p style="font-size: 13px; color: #4a5568; margin-top: -5px; margin-bottom: 15px;">
-                            <b>Servicio:</b> Medicina Interna &nbsp;|&nbsp; <b>Rotación Actual:</b> Pase de Visita en Sala
-                        </p>
-
-                        <!-- GRID CON 5 CUADROS DE COMPETENCIAS / SEMINARIOS -->
-                        <div class="badge-grid">
-                            <!-- Cuadrante 1: Razonamiento Clínico -->
-                            <div class="badge-card" onclick="openModal('razonamiento')">
-                                <span class="badge-tag" style="background:#c6f6d5; color:#22543d;">GANADA 🏅</span>
-                                <div class="badge-icon">🩺</div>
-                                <span class="badge-name">Razonamiento Clínico</span>
-                                <div class="progress-bar"><div class="progress-fill" style="width: 100%;"></div></div>
-                                <span class="badge-status">Otorgado en Ronda por Dr. Silva</span>
-                                <span class="click-hint">🔍 Ver desglose</span>
-                            </div>
-
-                            <!-- Cuadrante 2: Comunicación -->
-                            <div class="badge-card" onclick="openModal('comunicacion')">
-                                <span class="badge-tag" style="background:#c6f6d5; color:#22543d;">GANADA 🏅</span>
-                                <div class="badge-icon">💬</div>
-                                <span class="badge-name">Comunicación con Paciente</span>
-                                <div class="progress-bar"><div class="progress-fill" style="width: 100%;"></div></div>
-                                <span class="badge-status">Otorgado en Ronda por Dra. Martínez</span>
-                                <span class="click-hint">🔍 Ver desglose</span>
-                            </div>
-
-                            <!-- Cuadrante 3: Procedimientos -->
-                            <div class="badge-card" onclick="openModal('procedimientos')">
-                                <span class="badge-tag" style="background:#feebc8; color:#744210;">EN PROGRESO</span>
-                                <div class="badge-icon">📈</div>
-                                <span class="badge-name">Procedimientos Clínicos</span>
-                                <div class="progress-bar"><div class="progress-fill" style="width: 65%;"></div></div>
-                                <span class="badge-status">Falta 1 evaluación práctica</span>
-                                <span class="click-hint">🔍 Ver desglose</span>
-                            </div>
-
-                            <!-- Cuadrante 4: Trabajo en Equipo -->
-                            <div class="badge-card" onclick="openModal('trabajo_equipo')">
-                                <span class="badge-tag" style="background:#feebc8; color:#744210;">EN PROGRESO</span>
-                                <div class="badge-icon">❤️</div>
-                                <span class="badge-name">Trabajo en Equipo</span>
-                                <div class="progress-bar"><div class="progress-fill" style="width: 50%;"></div></div>
-                                <span class="badge-status">Evaluación semanal pendiente</span>
-                                <span class="click-hint">🔍 Ver desglose</span>
-                            </div>
-
-                            <!-- Cuadrante 5 (NUEVO): Evaluación en Seminarios -->
-                            <div class="badge-card" style="grid-column: span 2; background: #f0fff4; border: 1px solid #c6f6d5;" onclick="openModal('seminarios')">
-                                <span class="badge-tag" style="background:#38a169; color:white;">PROM. 6.8 📚</span>
-                                <div class="badge-icon">📖</div>
-                                <span class="badge-name">Evaluación en Seminarios Clínicos (Sem. 1 al 10)</span>
-                                <div class="progress-bar"><div class="progress-fill" style="width: 85%; background:#2f855a;"></div></div>
-                                <span class="badge-status">Correlacionado con el Calendario de Rotaciones</span>
-                                <span class="click-hint" style="color:#276749;">🔍 Ver notas detalladas por Seminario</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Calendario Actual e Intacto -->
-                    <div class="schedule-banner">
-                        <div class="schedule-header">📅 CALENDARIO Y RECOMENDACIÓN DE ROTACIÓN SEMANAL</div>
-                        <p style="margin: 0; font-size: 13px; color: #4a5568; line-height: 1.5;">
-                            <b>Estado actual:</b> Esta semana rotas por <strong>Cardiología en Sala de Medicina Interna</strong>.<br>
-                            💡 <i>Recomendación Docente:</i> Tener repasados los siguientes temas para revisión activa en el pase de visita:
-                        </p>
-                        <div style="margin-top: 8px; display: flex; gap: 8px;">
-                            <span class="topic-tag">ICC (Insuficiencia Cardíaca)</span>
-                            <span class="topic-tag">SCA (Síndrome Coronario Agudo)</span>
-                            <span class="topic-tag">Miocardiopatías</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Columna Derecha -->
-                <div>
-                    <div class="card">
-                        <h3 class="card-title">TUTORES CLÍNICOS DE LA ROTACIÓN DE SALA</h3>
-                        <div class="mentors-list">
-                            <div class="mentor-item"><div class="mentor-avatar">DS</div><span class="mentor-name">Dr. Silva</span></div>
-                            <div class="mentor-item"><div class="mentor-avatar">DM</div><span class="mentor-name">Dra. Martínez</span></div>
-                            <div class="mentor-item"><div class="mentor-avatar">PM</div><span class="mentor-name">Dr. Morales</span></div>
-                        </div>
-                    </div>
-
-                    <div class="card">
-                        <h3 class="card-title">MIS LOGROS Y BENEFICIOS</h3>
-                        <ul class="benefits-list">
-                            <li>
-                                <div><strong style="color:#2b6cb0;">Prioridad en Investigación</strong><br><small style="color:#4a5568;">Desbloqueado (2/2 Insignias)</small></div>
-                                <span style="font-size: 16px;">🏅</span>
-                            </li>
-                            <li>
-                                <div><strong style="color:#276749;">Posibilidad de Ayudantía Docente</strong><br><small style="color:#4a5568;">Desbloqueado por Seminarios</small></div>
-                                <span style="font-size: 16px;">👨‍🏫</span>
-                            </li>
-                            <li>
-                                <div><strong>Taller Exclusivo de ECG</strong><br><small style="color:#a0aec0;">Requiere Insignia Procedimientos</small></div>
-                                <span>⏳</span>
-                            </li>
-                            <li>
-                                <div><strong>Certificado de Reconocimiento</strong><br><small style="color:#a0aec0;">Requiere 4 Insignias completas</small></div>
-                                <span>🔒</span>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
+        <div class="form-group">
+          <label for="password">Contraseña</label>
+          <input type="password" id="password" placeholder="••••••••" required />
         </div>
+
+        <button type="submit" class="btn-submit">Ingresar a la Plataforma</button>
+      </form>
+
+      <div class="quick-access-box">
+        <strong>Accesos rápidos de prueba:</strong>
+        <button type="button" class="quick-btn" onclick="rellenar('paul.araneda', '16102002')">👤 Perfil Estudiante</button>
+        <button type="button" class="quick-btn" onclick="rellenar('docente', '16102002')">👨‍⚕️ Perfil Docente</button>
+      </div>
     </div>
+  </main>
 
-    <!-- MODAL PRINCIPAL DE DESGLOSE -->
-    <div class="modal-overlay" id="modalOverlay">
-        <div class="modal-content">
-            <span class="close-btn" onclick="closeModal()">&times;</span>
-            <div class="modal-header" id="modalTitle">Detalle</div>
-            <div id="modalBody"></div>
-        </div>
-    </div>
+  <footer class="footer">
+    © 2026 Universidad de Chile - Plataforma de Gestión de Internado
+  </footer>
 
-    <!-- MODAL DEL CALENDARIO DE AGOSTO -->
-    <div class="modal-overlay" id="calendarModalOverlay">
-        <div class="modal-content" style="width: 650px;">
-            <span class="close-btn" onclick="closeCalendarModal()">&times;</span>
-            <div class="modal-header">📅 Calendario de Rotaciones - Agosto 2026</div>
-            <p style="font-size: 12px; color: #718096; margin-top: -10px;">Haz clic en cada semana para ver la recomendación y temas del pase de visita:</p>
-            
-            <div class="calendar-grid">
-                <!-- Semana 1 -->
-                <div class="calendar-week" onclick="toggleWeekDetail('w1')">
-                    <div class="week-title">
-                        <span>Semana 1 (3 Ago - 7 Ago): Sala de Cardiología</span>
-                        <span style="color:#38a169;">En curso 📌</span>
-                    </div>
-                    <div class="week-subtext">Temas: ICC, SCA, Miocardiopatías.</div>
-                    <div class="week-detail" id="w1">
-                        <b>🎯 Objetivo de Rotación:</b> Realizar ingreso de pacientes coronarios, interpretación de ECG en sala y manejo de tratamiento farmacológico de ICC según guías clínicas.
-                    </div>
-                </div>
+  <script>
+    function rellenar(u, p) {
+      document.getElementById('username').value = u;
+      document.getElementById('password').value = p;
+    }
 
-                <!-- Semana 2 -->
-                <div class="calendar-week" onclick="toggleWeekDetail('w2')">
-                    <div class="week-title">
-                        <span>Semana 2 (10 Ago - 14 Ago): Sala de Respiratorio</span>
-                        <span style="color:#3182ce;">Próxima ⏳</span>
-                    </div>
-                    <div class="week-subtext">Temas: EPOC descompensado, Asma, Insuficiencia Respiratoria.</div>
-                    <div class="week-detail" id="w2">
-                        <b>🎯 Objetivo de Rotación:</b> Interpretación de Gases Arteriales (GSA), manejo de inhaloterapia, oxigenoterapia y criterios de ventilación no invasiva.
-                    </div>
-                </div>
+    document.getElementById('loginForm').addEventListener('submit', function(e) {
+      e.preventDefault();
 
-                <!-- Semana 3 -->
-                <div class="calendar-week" onclick="toggleWeekDetail('w3')">
-                    <div class="week-title">
-                        <span>Semana 3 (17 Ago - 21 Ago): Sala de Gastroenterología</span>
-                        <span style="color:#a0aec0;">Programada 🔒</span>
-                    </div>
-                    <div class="week-subtext">Temas: Hemorragia Digestiva Alta/Baja, Cirrosis y Complicaciones.</div>
-                    <div class="week-detail" id="w3">
-                        <b>🎯 Objetivo de Rotación:</b> Evaluación de paciente cirrótico (Child-Pugh), indicación de paracentesis diagnóstica y protocolo de profilaxis para varices esofágicas.
-                    </div>
-                </div>
+      const user = document.getElementById('username').value.trim().toLowerCase();
+      const pass = document.getElementById('password').value;
 
-                <!-- Semana 4 -->
-                <div class="calendar-week" onclick="toggleWeekDetail('w4')">
-                    <div class="week-title">
-                        <span>Semana 4 (24 Ago - 28 Ago): Sala de Reumatología</span>
-                        <span style="color:#a0aec0;">Programada 🔒</span>
-                    </div>
-                    <div class="week-subtext">Temas: Artritis Reumatoide, Lupus Eritematoso Sistémico (LES).</div>
-                    <div class="week-detail" id="w4">
-                        <b>🎯 Objetivo de Rotación:</b> Examen físico articular estructurado, interpretación de perfil inmunológico (ANA, ENA, FR, anti-CCP) y uso de inmunosupresores.
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+      if (user === 'paul.araneda' && pass === '16102002') {
+        sessionStorage.setItem('userRole', 'estudiante');
+        window.location.href = 'estudiante.html';
+        return;
+      }
 
-    <!-- MODAL SOLICITUD REFORZAMIENTO CLÍNICO -->
-    <div class="modal-overlay" id="reinforcementModalOverlay">
-        <div class="modal-content" style="width: 620px;">
-            <span class="close-btn" onclick="closeReinforcementModal()">&times;</span>
-            <div class="modal-header">🏥 Solicitud de Reforzamiento Clínico Adicional</div>
-            
-            <div class="disclaimer-box">
-                <b>⚠️ Nota importante:</b> La asignación de pasos prácticos o pases de visita adicionales es gestionada por el **PEI (Programa Encargado de Internado)** y <strong>depende estrictamente de la disponibilidad docente y de cupos en el servicio solicitado</strong>.
-            </div>
+      if (user === 'docente' && pass === '16102002') {
+        sessionStorage.setItem('userRole', 'docente');
+        window.location.href = 'docente.html';
+        return;
+      }
 
-            <p style="font-size: 12px; color: #4a5568; margin-bottom: 10px;">
-                Selecciona la especialidad o sala hospitalaria en la que identifiques una oportunidad de mejora o necesidad de refuerzo:
-            </p>
-
-            <!-- Lista de Servicios Hospitalarios -->
-            <div class="service-list" id="serviceList">
-                <div class="service-card" onclick="selectService('Sala de Cardiología')">
-                    <strong>❤️ Sala de Cardiología</strong>
-                    <span>Refuerzo en Auscultación, ECG y Manejo de ICC</span>
-                </div>
-                <div class="service-card" onclick="selectService('Sala de Gastroenterología')">
-                    <strong>🩺 Sala de Gastroenterología</strong>
-                    <span>Refuerzo en Paciente Cirrótico y Paracentesis</span>
-                </div>
-                <div class="service-card" onclick="selectService('Sala de Respiratorio')">
-                    <strong>🫁 Sala de Respiratorio</strong>
-                    <span>Refuerzo en Interpretación GSA e Inhaloterapia</span>
-                </div>
-                <div class="service-card" onclick="selectService('Sala de Endocrinología')">
-                    <strong>🩸 Sala de Endocrinología</strong>
-                    <span>Refuerzo en Cetoacidosis y Ajuste de Insulinas</span>
-                </div>
-                <div class="service-card" onclick="selectService('Sala de Nefrología / Renal')">
-                    <strong>🧪 Sala de Nefrología / Renal</strong>
-                    <span>Refuerzo en Injuria Renal Aguda y Sedimento Uria</span>
-                </div>
-                <div class="service-card" onclick="selectService('Sala de Infectología')">
-                    <strong>🧫 Sala de Infectología</strong>
-                    <span>Refuerzo en Uso de Antimicrobianos y Sepsis</span>
-                </div>
-            </div>
-
-            <!-- Formulario para Enviar al PEI -->
-            <div class="request-form" id="requestForm">
-                <div style="font-weight: bold; font-size: 13px; color: #3730a3; margin-bottom: 8px;" id="selectedServiceTitle">
-                    Solicitud para: 
-                </div>
-                
-                <label for="modality">Modalidad solicitada al PEI:</label>
-                <select id="modality">
-                    <option>1 Pase de Visita Adicional (Acompañamiento en Sala)</option>
-                    <option>Tutoría focalizada en procedimiento clínico específico</option>
-                    <option>Micro-rotación de fin de semana / turno protegido</option>
-                </select>
-
-                <label for="reason">Motivo o competencia específica a reforzar (Autoevaluación):</label>
-                <textarea id="reason" rows="3" placeholder="Ej: Siento que me falta práctica interpretando trazados de ECG complejos y quisiera presentar al menos 2 casos adicionales..."></textarea>
-
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <button class="btn-submit" onclick="submitRequest()">Enviar Solicitud al PEI</button>
-                    <button style="background:none; border:none; color:#6b7280; font-size:11px; cursor:pointer;" onclick="cancelServiceSelection()">← Volver a servicios</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- SCRIPT DE INTERACTIVIDAD -->
-    <script>
-        function toggleUnlockedPanel() {
-            const panel = document.getElementById('unlockedPanel');
-            panel.style.display = (panel.style.display === 'block') ? 'none' : 'block';
-        }
-
-        function openCalendarModal() {
-            document.getElementById('calendarModalOverlay').style.display = 'flex';
-        }
-
-        function closeCalendarModal() {
-            document.getElementById('calendarModalOverlay').style.display = 'none';
-        }
-
-        /* Funciones Modal Reforzamiento Clínico */
-        function openReinforcementModal() {
-            document.getElementById('reinforcementModalOverlay').style.display = 'flex';
-            cancelServiceSelection();
-        }
-
-        function closeReinforcementModal() {
-            document.getElementById('reinforcementModalOverlay').style.display = 'none';
-        }
-
-        function selectService(serviceName) {
-            document.getElementById('serviceList').style.display = 'none';
-            document.getElementById('requestForm').style.display = 'block';
-            document.getElementById('selectedServiceTitle').innerHTML = 'Solicitud para: <u>' + serviceName + '</u>';
-        }
-
-        function cancelServiceSelection() {
-            document.getElementById('serviceList').style.display = 'grid';
-            document.getElementById('requestForm').style.display = 'none';
-            document.getElementById('reason').value = '';
-        }
-
-        function submitRequest() {
-            const reason = document.getElementById('reason').value;
-            if (!reason.trim()) {
-                alert('Por favor describe brevemente el motivo o área que deseas reforzar antes de enviar.');
-                return;
-            }
-            alert('✅ Solicitud enviada exitosamente al PEI.\nQuedará sujeta a la disponibilidad docente y de cupos en el servicio. Recibirás una notificación por U-Cursos.');
-            closeReinforcementModal();
-        }
-
-        function toggleWeekDetail(id) {
-            const el = document.getElementById(id);
-            el.style.display = (el.style.display === 'block') ? 'none' : 'block';
-        }
-
-        const detailsData = {
-            razonamiento: {
-                title: "🩺 Desglose: Razonamiento Clínico",
-                items: [
-                    { name: "Anamnesis Próxima y Remota", percent: "100%", color: "#38a169" },
-                    { name: "Planteamiento Sindromático y Diferenciales", percent: "50%", color: "#dd6b20" },
-                    { name: "Explicación Fisiopatológica", percent: "50%", color: "#dd6b20" },
-                    { name: "Manejo Inicial y Justificación de Exámenes", percent: "100%", color: "#38a169" }
-                ],
-                feedback: "<b>Feedback del Tutor (Dr. Silva):</b> 'Paul muestra un excelente manejo en la recolección de datos e inicio de tratamiento. Falta profundizar la hipótesis fisiopatológica en el pase de visita.'"
-            },
-            procedimientos: {
-                title: "📈 Desglose: Procedimientos Clínicos",
-                items: [
-                    { name: "Anamnesis Remota (Fármacos, Alergias, Hábitos)", percent: "100%", color: "#38a169" },
-                    { name: "Examen Físico Segmentario Completo", percent: "80%", color: "#3182ce" },
-                    { name: "Técnica de Procedimientos (Punción, Vía Venosa)", percent: "50%", color: "#dd6b20" }
-                ],
-                feedback: "<b>Feedback de Tutoría:</b> 'Requiere 1 procedimiento supervisado adicional en sala para certificar la insignia.'"
-            },
-            trabajo_equipo: {
-                title: "❤️ Desglose: Trabajo en Equipo",
-                items: [
-                    { name: "Gestión y Cierre de Fichas Clínicas", percent: "60%", color: "#dd6b20" },
-                    { name: "Papelería Hospitalaria y Cierre de Turno", percent: "50%", color: "#dd6b20" },
-                    { name: "Relación con Equipo de Enfermería / TENS", percent: "90%", color: "#38a169" }
-                ],
-                feedback: "<b>Feedback de Sala:</b> 'Excelente actitud y trato humano. Reforzar cierre oportuno de fichas antes del término de la jornada.'"
-            },
-            comunicacion: {
-                title: "💬 Desglose: Comunicación con Paciente",
-                items: [
-                    { name: "Empatía y Escucha Activa", percent: "100%", color: "#38a169" },
-                    { name: "Explicación Clara del Diagnóstico", percent: "100%", color: "#38a169" }
-                ],
-                feedback: "<b>Feedback de la Tutora (Dra. Martínez):</b> 'Trato respetuoso, claro y de gran empatía con las familias de los pacientes.'"
-            },
-            seminarios: {
-                title: "📚 Calificaciones: Seminarios Clínicos (Sem. 1 al 10)",
-                items: [
-                    { name: "Sem. 1: Síndrome Coronario Agudo (Cardio)", percent: "7.0", color: "#38a169" },
-                    { name: "Sem. 2: Insuficiencia Cardíaca y Shock (Cardio)", percent: "6.8", color: "#38a169" },
-                    { name: "Sem. 3: Manejo de EPOC y Crisis Asmática (Resp)", percent: "6.5", color: "#3182ce" },
-                    { name: "Sem. 4: Gases Arteriales e Insuf. Respiratoria (Resp)", percent: "7.0", color: "#38a169" },
-                    { name: "Sem. 5: Cirrosis y Encefalopatía Hepática (Gastro)", percent: "6.7", color: "#38a169" },
-                    { name: "Sem. 6: Hemorragia Digestiva Alta/Baja (Gastro)", percent: "6.9", color: "#38a169" },
-                    { name: "Sem. 7: Artritis Reumatoide y Diagnóstico (Reuma)", percent: "6.8", color: "#38a169" },
-                    { name: "Sem. 8: Compromiso Sistémico en LES (Reuma)", percent: "7.0", color: "#38a169" },
-                    { name: "Sem. 9: Síndrome Nefrótico y Nefrítico (Nefro)", percent: " Pendiente", color: "#a0aec0" },
-                    { name: "Sem. 10: Infecciones Urinarias Complejas (Nefro)", percent: " Pendiente", color: "#a0aec0" }
-                ],
-                feedback: "<b>Promedio Actual de Seminarios: 6.8</b>. ¡Rendimiento sobresaliente que valida la opción de ayudantía docente!"
-            },
-            investigacion_silva: {
-                title: "🔬 Proyecto de Investigación - Dr. Silva (Cardiología)",
-                items: [
-                    { name: "Título", percent: "'Marcadores de Reingreso Temprano en Insuficiencia Cardíaca'", color: "#2b6cb0" },
-                    { name: "Objetivo General", percent: "Evaluar variables clínicas asociadas a descompensación en 30 días post-alta.", color: "#4a5568" }
-                ],
-                feedback: "<b>Rol del Estudiante:</b> Apoyo en recolección de datos de fichas clínicas en sala de cardiología, análisis descriptivo y coautoría en el reporte científico."
-            },
-            investigacion_martinez: {
-                title: "🔬 Proyecto de Investigación - Dra. Martínez (Reumatología)",
-                items: [
-                    { name: "Título", percent: "'Manifestaciones Extraarticulares en Lupus Eritematoso Sistémico'", color: "#2b6cb0" },
-                    { name: "Objetivo General", percent: "Caracterizar la prevalencia de compromiso seroso y renal en pacientes de sala.", color: "#4a5568" }
-                ],
-                feedback: "<b>Rol del Estudiante:</b> Revisión bibliográfica sistemática, aplicación de encuestas de calidad de vida y participación en el póster para congreso."
-            },
-            ayudantia_morales: {
-                title: "👨‍🏫 Ayudantía Docente - Dr. Morales (Respiratorio & Gastro)",
-                items: [
-                    { name: "Asignatura", percent: "Introducción a la Clínica / Semiología", color: "#276749" },
-                    { name: "Objetivo", percent: "Acompañamiento a estudiantes de 3er año en talleres de anamnesis y examen físico.", color: "#4a5568" }
-                ],
-                feedback: "<b>Rol del Estudiante:</b> Liderar grupos pequeños en la revisión de casos clínicos de EPOC y Cirrosis, guiando la formulación diagnóstica básica."
-            }
-        };
-
-        function openModal(type) {
-            const data = detailsData[type];
-            if (!data) return;
-
-            document.getElementById('modalTitle').innerHTML = data.title;
-            let htmlContent = "";
-            
-            data.items.forEach(item => {
-                htmlContent += `
-                    <div class="sub-skill">
-                        <div class="sub-skill-header">
-                            <span>${item.name}</span>
-                            <span style="color:${item.color}">${item.percent}</span>
-                        </div>
-                        ${item.percent.includes('%') ? `
-                        <div class="sub-bar">
-                            <div class="sub-fill" style="width: ${item.percent}; background-color: ${item.color};"></div>
-                        </div>` : ''}
-                    </div>
-                `;
-            });
-
-            htmlContent += `<div class="feedback-box">${data.feedback}</div>`;
-            document.getElementById('modalBody').innerHTML = htmlContent;
-            document.getElementById('modalOverlay').style.display = 'flex';
-        }
-
-        function closeModal() {
-            document.getElementById('modalOverlay').style.display = 'none';
-        }
-
-        window.onclick = function(event) {
-            const modal = document.getElementById('modalOverlay');
-            const calModal = document.getElementById('calendarModalOverlay');
-            const reinfModal = document.getElementById('reinforcementModalOverlay');
-            if (event.target == modal) closeModal();
-            if (event.target == calModal) closeCalendarModal();
-            if (event.target == reinfModal) closeReinforcementModal();
-        }
-    </script>
+      alert('⚠️ Usuario o contraseña incorrectos.\n\nPrueba con:\n- Estudiante: paul.araneda / 16102002\n- Docente: docente / 16102002');
+    });
+  </script>
 </body>
 </html>
