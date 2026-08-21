@@ -1,565 +1,131 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>U-Cursos - Portal de Tutoría Clínica (Medicina Interna)</title>
-    
-    <!-- Script de Seguridad de Roles -->
-    <script>
-        if (sessionStorage.getItem('userRole') !== 'docente') {
-            window.location.href = 'index.html';
-        }
-        function cerrarSesion() {
-            sessionStorage.clear();
-            window.location.href = 'index.html';
-        }
-    </script>
+<script>
+    let alumnoSeleccionado = "";
+    let speechRecognizer = null;
+    let grabacionActiva = false;
 
-    <style>
-        :root {
-            --primary: #1e3a8a;
-            --primary-hover: #1d4ed8;
-            --primary-subtle: #eff6ff;
-            --success: #16a34a;
-            --success-bg: #dcfce7;
-            --warning: #d97706;
-            --warning-bg: #fef3c7;
-            --danger: #dc2626;
-            --danger-bg: #fee2e2;
-            --slate-50: #f8fafc;
-            --slate-100: #f1f5f9;
-            --slate-200: #e2e8f0;
-            --slate-600: #475569;
-            --slate-800: #1e293b;
-            --slate-900: #0f172a;
-            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
-            --radius-md: 8px;
-        }
+    // Inicialización y configuración de la Web Speech API
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+        const SpeechAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
+        speechRecognizer = new SpeechAPI();
+        
+        // 1. Mantener la sesión activa durante las pausas del docente
+        speechRecognizer.continuous = true;
+        
+        // 2. Permitir resultados en tiempo real y finales
+        speechRecognizer.interimResults = true;
+        speechRecognizer.lang = 'es-CL'; // Español de Chile
 
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
-        body { background: var(--slate-100); color: var(--slate-900); -webkit-font-smoothing: antialiased; }
+        // 3. Manejo acumulativo y continuo en el evento onresult
+        speechRecognizer.onresult = function(event) {
+            const textarea = document.getElementById('txtFeedbackVoz');
+            let transcriptFinalNuevo = '';
 
-        /* HEADER INSTITUCIONAL */
-        .top-navbar { background: var(--primary); color: white; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; box-shadow: var(--shadow-md); }
-        .nav-brand { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 15px; }
-        .nav-controls { display: flex; align-items: center; gap: 14px; font-size: 13px; }
-        .btn-logout { background: rgba(255, 255, 255, 0.12); color: white; border: 1px solid rgba(255, 255, 255, 0.25); padding: 5px 10px; border-radius: 4px; cursor: pointer; text-decoration: none; font-weight: 600; }
-        .btn-logout:hover { background: rgba(255, 255, 255, 0.25); }
-
-        .app-body { display: flex; min-height: calc(100vh - 54px); }
-
-        /* SIDEBAR COMPACTO */
-        .app-sidebar { width: 230px; background: white; border-right: 1px solid var(--slate-200); padding: 18px 12px; display: flex; flex-direction: column; justify-content: space-between; }
-        .sidebar-menu { list-style: none; }
-        .sidebar-menu li { padding: 9px 12px; font-size: 13px; font-weight: 600; color: var(--slate-600); border-radius: 6px; margin-bottom: 4px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
-        .sidebar-menu li:hover { background: var(--primary-subtle); color: var(--primary); }
-        .sidebar-menu li.active { background: var(--primary-subtle); color: var(--primary); border-left: 3px solid var(--primary); }
-        .badge-pill { background: var(--danger); color: white; border-radius: 999px; padding: 1px 7px; font-size: 10px; font-weight: 700; }
-
-        /* MAIN CONTAINER */
-        .app-main { flex: 1; padding: 22px 28px; overflow-y: auto; }
-        .header-action-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
-        .title-h1 { font-size: 21px; font-weight: 800; color: var(--slate-900); letter-spacing: -0.4px; }
-        .title-sub { font-size: 12px; color: var(--slate-600); margin-top: 2px; }
-
-        /* BOTÓN DE CIERRE DE ACTAS MASIVO (CERO PAPELEO) */
-        .btn-sign-bulk { background: var(--success); color: white; border: none; padding: 10px 16px; border-radius: 6px; font-size: 13px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: var(--shadow-sm); transition: all 0.2s; }
-        .btn-sign-bulk:hover { background: #15803d; transform: translateY(-1px); }
-
-        /* KPIS DE RESUMEN CLÍNICO */
-        .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 20px; }
-        .kpi-box { background: white; padding: 14px 16px; border-radius: var(--radius-md); border: 1px solid var(--slate-200); border-left: 4px solid var(--primary); box-shadow: var(--shadow-sm); }
-        .kpi-box.kpi-warn { border-left-color: var(--warning); }
-        .kpi-box.kpi-danger { border-left-color: var(--danger); }
-        .kpi-num { font-size: 22px; font-weight: 800; color: var(--slate-900); }
-        .kpi-tag { font-size: 11px; font-weight: 700; color: var(--slate-600); text-transform: uppercase; margin-top: 2px; }
-
-        /* GRID PRINCIPAL */
-        .content-split { display: grid; grid-template-columns: 2.3fr 1fr; gap: 20px; }
-        .panel-card { background: white; border-radius: var(--radius-md); border: 1px solid var(--slate-200); padding: 18px; box-shadow: var(--shadow-sm); margin-bottom: 20px; }
-        .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid var(--slate-200); }
-        .panel-title { font-size: 13px; font-weight: 700; color: var(--slate-900); text-transform: uppercase; letter-spacing: 0.3px; }
-
-        /* TABLA DE INTERNOS CON SEMÁFORO PREVENTIVO */
-        .table-wrap { width: 100%; overflow-x: auto; }
-        .table-custom { width: 100%; border-collapse: collapse; font-size: 12px; }
-        .table-custom th { background: var(--slate-50); color: var(--slate-600); font-weight: 700; text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--slate-200); text-transform: uppercase; font-size: 10px; }
-        .table-custom td { padding: 11px 10px; border-bottom: 1px solid var(--slate-200); vertical-align: middle; }
-
-        /* FILAS CON SEMÁFORO DE ALERTA */
-        .row-alert-danger { background: #fff5f5 !important; border-left: 4px solid var(--danger) !important; }
-        .row-alert-warning { background: #fffdf5 !important; border-left: 4px solid var(--warning) !important; }
-
-        /* BADGES */
-        .chip { display: inline-flex; align-items: center; padding: 2px 7px; border-radius: 999px; font-size: 10px; font-weight: 700; }
-        .chip-green { background: var(--success-bg); color: #166534; }
-        .chip-orange { background: var(--warning-bg); color: #9a3412; }
-        .chip-red { background: var(--danger-bg); color: #991b1b; }
-        .chip-blue { background: var(--primary-subtle); color: var(--primary); }
-
-        /* PROCEDIMIENTOS CON POPOVER INTERACTIVO */
-        .proc-trigger { cursor: pointer; text-decoration: underline dotted var(--slate-600); position: relative; font-weight: 700; }
-        .proc-popover { display: none; position: absolute; bottom: 125%; left: 0; width: 220px; background: var(--slate-800); color: white; padding: 9px 12px; border-radius: 6px; font-size: 11px; font-weight: normal; z-index: 60; box-shadow: 0 6px 14px rgba(0,0,0,0.25); text-decoration: none; line-height: 1.4; }
-        .proc-trigger:hover .proc-popover { display: block; }
-
-        /* EQUIDAD DE CARGA DE CAMAS */
-        .bed-metric { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600; }
-        .load-indicator { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
-
-        /* BOTÓN DE ACCIÓN MINI-CEX */
-        .btn-minicex-trigger { background: var(--primary); color: white; border: none; padding: 6px 11px; border-radius: 4px; font-size: 11px; font-weight: 700; cursor: pointer; transition: background 0.15s; }
-        .btn-minicex-trigger:hover { background: var(--primary-hover); }
-
-        /* ESTADO DE TRAMITACIÓN SECRETARÍA */
-        .sync-step { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 700; }
-
-        /* MÓDULO PEI CON DELEGACIÓN A RESIDENTES */
-        .pei-item { background: var(--slate-50); border: 1px solid var(--slate-200); border-left: 3px solid var(--primary); padding: 12px; border-radius: 6px; margin-bottom: 10px; }
-        .pei-top { display: flex; justify-content: space-between; font-weight: 700; font-size: 11px; color: var(--slate-800); margin-bottom: 4px; }
-        .pei-detail { font-size: 11px; color: var(--slate-600); line-height: 1.35; margin-bottom: 8px; }
-        .pei-assign-row { display: flex; gap: 5px; }
-        .pei-assign-select { font-size: 11px; padding: 5px; border: 1px solid var(--slate-200); border-radius: 4px; background: white; color: var(--slate-900); flex: 1; outline: none; }
-        .btn-assign-action { background: var(--slate-800); color: white; border: none; padding: 5px 9px; border-radius: 4px; font-size: 11px; font-weight: 700; cursor: pointer; }
-        .btn-assign-action:hover { background: var(--slate-900); }
-
-        /* MODAL MINI-CEX CON WEBSPEECH API */
-        .modal-shade { display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.65); z-index: 200; justify-content: center; align-items: center; padding: 14px; backdrop-filter: blur(3px); }
-        .modal-card { background: white; width: 640px; max-width: 100%; border-radius: 10px; box-shadow: 0 12px 35px rgba(0,0,0,0.25); overflow: hidden; animation: popUp 0.15s ease-out; }
-        @keyframes popUp { from { transform: scale(0.97); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-
-        .modal-top { padding: 14px 18px; background: var(--slate-50); border-bottom: 1px solid var(--slate-200); display: flex; justify-content: space-between; align-items: center; }
-        .modal-top h3 { font-size: 15px; font-weight: 800; color: var(--slate-900); }
-        .modal-scroll { padding: 18px; max-height: 75vh; overflow-y: auto; }
-
-        /* RÚBRICAS */
-        .pauta-row { margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid var(--slate-200); }
-        .pauta-desc { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
-        .pauta-title { font-size: 12px; font-weight: 700; color: var(--slate-900); }
-        .pauta-guide { font-size: 10px; color: var(--slate-600); }
-        .rubric-scale { display: flex; gap: 4px; }
-        .rubric-btn { border: 1px solid var(--slate-200); background: white; width: 32px; height: 30px; border-radius: 4px; font-size: 11px; font-weight: 700; cursor: pointer; color: var(--slate-800); }
-        .rubric-btn:hover { background: var(--primary-subtle); border-color: var(--primary); }
-        .rubric-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
-
-        /* DICTADO POR VOZ */
-        .voice-box { margin-top: 10px; }
-        .voice-topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
-        .btn-mic-record { background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; padding: 4px 9px; border-radius: 999px; font-size: 10px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; }
-        .btn-mic-record.recording { background: var(--danger); color: white; animation: micBlink 1s infinite; }
-        @keyframes micBlink { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
-        .voice-textarea { width: 100%; min-height: 75px; padding: 8px; font-size: 12px; border: 1px solid var(--slate-200); border-radius: 6px; outline: none; resize: vertical; box-sizing: border-box; }
-        .voice-textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 2px var(--primary-subtle); }
-
-        .modal-bottom { padding: 12px 18px; background: var(--slate-50); border-top: 1px solid var(--slate-200); display: flex; justify-content: flex-end; gap: 8px; }
-        .btn-cancel { background: var(--slate-200); color: var(--slate-800); border: none; padding: 7px 12px; border-radius: 5px; font-size: 11px; font-weight: 700; cursor: pointer; }
-        .btn-save-eval { background: var(--primary); color: white; border: none; padding: 7px 15px; border-radius: 5px; font-size: 11px; font-weight: 700; cursor: pointer; }
-
-        @media (max-width: 900px) {
-            .app-body { flex-direction: column; }
-            .app-sidebar { width: 100%; border-right: none; border-bottom: 1px solid var(--slate-200); }
-            .content-split { grid-template-columns: 1fr; }
-        }
-    </style>
-</head>
-<body>
-
-    <!-- Header Superior -->
-    <header class="top-navbar">
-        <div class="nav-brand">
-            🏥 <span>U-Cursos | Portal de Tutoría Clínica (Medicina Interna)</span>
-        </div>
-        <div class="nav-controls">
-            <span>Dr. Silva (Jefe de Sala / Tutor Clínico)</span>
-            <a class="btn-logout" onclick="cerrarSesion()">Cerrar Sesión</a>
-        </div>
-    </header>
-
-    <div class="app-body">
-        <!-- Sidebar Navigation -->
-        <aside class="app-sidebar">
-            <ul class="sidebar-menu">
-                <li class="active">📊 Supervisión en Sala</li>
-                <li>⚡ Evaluación Mini-CEX</li>
-                <li>📋 Tramitación Secretaría</li>
-                <li>🎯 Refuerzos PEI <span class="badge-pill">2</span></li>
-                <li>🛌 Equidad de Camas</li>
-            </ul>
-            <div style="padding: 8px; background: var(--slate-50); border-radius: 6px; border: 1px solid var(--slate-200); font-size: 10px; color: var(--slate-600);">
-                <b>Rotación Actual:</b> Sala 4 - Agudos Cardiología
-            </div>
-        </aside>
-
-        <!-- Contenido Central -->
-        <main class="app-main">
-            <div class="header-action-row">
-                <div>
-                    <h1 class="title-h1">Pase de Visita Matutino & Gestión de Cohorte</h1>
-                    <p class="title-sub">Supervisión en tiempo real, pautas Mini-CEX y cierre directo con secretaría docente.</p>
-                </div>
-                <button class="btn-sign-bulk" onclick="firmarActaMasiva()">
-                    ✍️ Firmar Acta y Enviar a Secretaría
-                </button>
-            </div>
-
-            <!-- KPIs -->
-            <section class="kpi-row">
-                <div class="kpi-box">
-                    <div class="kpi-num">8</div>
-                    <div class="kpi-tag">Internos Asignados</div>
-                </div>
-                <div class="kpi-box">
-                    <div class="kpi-num">6.4</div>
-                    <div class="kpi-tag">Promedio General Ronda</div>
-                </div>
-                <div class="kpi-box kpi-warn">
-                    <div class="kpi-num">1</div>
-                    <div class="kpi-tag">Semáforo de Alerta (Rezago)</div>
-                </div>
-                <div class="kpi-box kpi-danger">
-                    <div class="kpi-num">2</div>
-                    <div class="kpi-tag">Solicitudes PEI por Delegar</div>
-                </div>
-            </section>
-
-            <div class="content-split">
-                <!-- Columna Izquierda: Matriz con Semáforo y Carga de Camas -->
-                <section class="panel-card">
-                    <div class="panel-header">
-                        <span class="panel-title">Estado de Competencias, Camas y Secretaría</span>
-                        <span style="font-size: 11px; color: var(--slate-600);">Pase el cursor sobre % para desglose</span>
-                    </div>
-
-                    <div class="table-wrap">
-                        <table class="table-custom">
-                            <thead>
-                                <tr>
-                                    <th>Interno / Estado</th>
-                                    <th>Carga Camas</th>
-                                    <th>Razonamiento</th>
-                                    <th>Procedimientos</th>
-                                    <th>Secretaría</th>
-                                    <th>Acción</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <!-- Interno 1 -->
-                                <tr>
-                                    <td>
-                                        <strong>Pedro Martínez</strong><br>
-                                        <span class="chip chip-green" style="margin-top:2px;">Al día ✅</span>
-                                    </td>
-                                    <td>
-                                        <div class="bed-metric">
-                                            <span class="load-indicator" style="background:#16a34a;"></span> 4 Camas (Media)
-                                        </div>
-                                    </td>
-                                    <td><span class="chip chip-green">100% Ganada</span></td>
-                                    <td>
-                                        <span class="proc-trigger">
-                                            65% (Falta 1) ℹ️
-                                            <div class="proc-popover">
-                                                ✅ Anamnesis remota<br>
-                                                ✅ Examen físico segmentario<br>
-                                                ❌ <b>Pendiente:</b> Punción / Vía Venosa
-                                            </div>
-                                        </span>
-                                    </td>
-                                    <td><span class="sync-step" id="sync-pedro">⏳ Borrador</span></td>
-                                    <td><button class="btn-minicex-trigger" onclick="abrirMiniCex('Pedro Martínez')">Evaluar Ronda</button></td>
-                                </tr>
-
-                                <!-- Interno 2: Alerta Preventiva / Semáforo Naranjo -->
-                                <tr class="row-alert-warning">
-                                    <td>
-                                        <strong>Camila Sepúlveda</strong><br>
-                                        <span class="chip chip-orange" style="margin-top:2px;">⚠️ Alerta Rezago</span>
-                                    </td>
-                                    <td>
-                                        <div class="bed-metric">
-                                            <span class="load-indicator" style="background:#d97706;"></span> 5 Camas (Alta)
-                                        </div>
-                                    </td>
-                                    <td><span class="chip chip-orange">60% En desarrollo</span></td>
-                                    <td>
-                                        <span class="proc-trigger">
-                                            40% (Faltan 2) ℹ️
-                                            <div class="proc-popover">
-                                                ✅ Anamnesis general<br>
-                                                ❌ <b>Pendiente:</b> Examen articular<br>
-                                                ❌ <b>Pendiente:</b> Punción Lumbar
-                                            </div>
-                                        </span>
-                                    </td>
-                                    <td><span class="sync-step" id="sync-camila">⏳ Borrador</span></td>
-                                    <td><button class="btn-minicex-trigger" onclick="abrirMiniCex('Camila Sepúlveda')">Evaluar Ronda</button></td>
-                                </tr>
-
-                                <!-- Interno 3 -->
-                                <tr>
-                                    <td>
-                                        <strong>Matías Vergara</strong><br>
-                                        <span class="chip chip-green" style="margin-top:2px;">Sobresaliente 🏅</span>
-                                    </td>
-                                    <td>
-                                        <div class="bed-metric">
-                                            <span class="load-indicator" style="background:#16a34a;"></span> 3 Camas (Baja)
-                                        </div>
-                                    </td>
-                                    <td><span class="chip chip-green">100% Ganada</span></td>
-                                    <td>
-                                        <span class="proc-trigger">
-                                            100% Ganada ℹ️
-                                            <div class="proc-popover">
-                                                ✅ Todos los procedimientos certificados en sala.
-                                            </div>
-                                        </span>
-                                    </td>
-                                    <td><span class="sync-step" id="sync-matias" style="color:var(--success);">📩 Recibido por Secretaría</span></td>
-                                    <td><button class="btn-minicex-trigger" onclick="abrirMiniCex('Matías Vergara')">Evaluar Ronda</button></td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </section>
-
-                <!-- Columna Derecha: Delegación Automatizada PEI -->
-                <section class="panel-card">
-                    <div class="panel-header">
-                        <span class="panel-title">Solicitudes PEI (Delegación)</span>
-                    </div>
-
-                    <!-- Solicitud 1 -->
-                    <div class="pei-item">
-                        <div class="pei-top">
-                            <span>Pedro Martínez</span>
-                            <span class="chip chip-blue">Cardiología</span>
-                        </div>
-                        <div class="pei-detail">
-                            <b>Solicitud:</b> 1 Pase de Visita extra en sala para interpretación de ECG complejo en ICC descompensada.
-                        </div>
-                        <div class="pei-assign-row">
-                            <select class="pei-assign-select" id="assign-pedro">
-                                <option value="Dr. Morales (Especialista Turno)">Asignar a: Dr. Morales</option>
-                                <option value="Dra. Gómez (Residente R2)">Asignar a: Dra. Gómez (R2)</option>
-                                <option value="Dr. Tapia (Residente R3)">Asignar a: Dr. Tapia (R3)</option>
-                            </select>
-                            <button class="btn-assign-action" onclick="delegarPEI('Pedro Martínez', 'assign-pedro')">Delegar</button>
-                        </div>
-                    </div>
-
-                    <!-- Solicitud 2 -->
-                    <div class="pei-item">
-                        <div class="pei-top">
-                            <span>Camila Sepúlveda</span>
-                            <span class="chip chip-orange">Procedimientos</span>
-                        </div>
-                        <div class="pei-detail">
-                            <b>Solicitud:</b> Tutoría guiada en Punción Lumbar / Paracentesis en sala de agudos.
-                        </div>
-                        <div class="pei-assign-row">
-                            <select class="pei-assign-select" id="assign-camila">
-                                <option value="Dra. Martínez (Especialista)">Asignar a: Dra. Martínez</option>
-                                <option value="Dr. Tapia (Residente R3)">Asignar a: Dr. Tapia (R3)</option>
-                            </select>
-                            <button class="btn-assign-action" onclick="delegarPEI('Camila Sepúlveda', 'assign-camila')">Delegar</button>
-                        </div>
-                    </div>
-                </section>
-            </div>
-        </main>
-    </div>
-
-    <!-- MODAL MINI-CEX CON VOZ A TEXTO -->
-    <div class="modal-shade" id="modalMiniCex">
-        <div class="modal-card">
-            <div class="modal-top">
-                <div>
-                    <h3 id="modalStudentLabel">Evaluación Mini-CEX</h3>
-                    <span style="font-size:10px; color:var(--slate-600);">Pauta de Observación Clínica Directa (Escala 1 al 5)</span>
-                </div>
-                <span style="cursor:pointer; font-size:18px; font-weight:bold; color:var(--slate-600);" onclick="cerrarMiniCex()">&times;</span>
-            </div>
-
-            <div class="modal-scroll">
-                <!-- Dominio 1 -->
-                <div class="pauta-row">
-                    <div class="pauta-desc">
-                        <div>
-                            <div class="pauta-title">1. Habilidades de Anamnesis / Entrevista</div>
-                            <div class="pauta-guide">Estructura cronológica y empatía con el paciente.</div>
-                        </div>
-                        <div class="rubric-scale">
-                            <button type="button" class="rubric-btn" onclick="setScore(this)">1</button>
-                            <button type="button" class="rubric-btn" onclick="setScore(this)">2</button>
-                            <button type="button" class="rubric-btn" onclick="setScore(this)">3</button>
-                            <button type="button" class="rubric-btn active" onclick="setScore(this)">4</button>
-                            <button type="button" class="rubric-btn" onclick="setScore(this)">5</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Dominio 2 -->
-                <div class="pauta-row">
-                    <div class="pauta-desc">
-                        <div>
-                            <div class="pauta-title">2. Habilidades de Examen Físico</div>
-                            <div class="pauta-guide">Técnica semiológica rigurosa y fundamentada.</div>
-                        </div>
-                        <div class="rubric-scale">
-                            <button type="button" class="rubric-btn" onclick="setScore(this)">1</button>
-                            <button type="button" class="rubric-btn" onclick="setScore(this)">2</button>
-                            <button type="button" class="rubric-btn" onclick="setScore(this)">3</button>
-                            <button type="button" class="rubric-btn active" onclick="setScore(this)">4</button>
-                            <button type="button" class="rubric-btn" onclick="setScore(this)">5</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Dominio 3 -->
-                <div class="pauta-row">
-                    <div class="pauta-desc">
-                        <div>
-                            <div class="pauta-title">3. Juicio Clínico y Razonamiento</div>
-                            <div class="pauta-guide">Diagnósticos diferenciales y pertinencia de exámenes.</div>
-                        </div>
-                        <div class="rubric-scale">
-                            <button type="button" class="rubric-btn" onclick="setScore(this)">1</button>
-                            <button type="button" class="rubric-btn" onclick="setScore(this)">2</button>
-                            <button type="button" class="rubric-btn" onclick="setScore(this)">3</button>
-                            <button type="button" class="rubric-btn" onclick="setScore(this)">4</button>
-                            <button type="button" class="rubric-btn active" onclick="setScore(this)">5</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Dominio 4 -->
-                <div class="pauta-row">
-                    <div class="pauta-desc">
-                        <div>
-                            <div class="pauta-title">4. Organización y Eficacia en Ronda</div>
-                            <div class="pauta-guide">Capacidad de síntesis verbal y cierre de indicaciones.</div>
-                        </div>
-                        <div class="rubric-scale">
-                            <button type="button" class="rubric-btn" onclick="setScore(this)">1</button>
-                            <button type="button" class="rubric-btn" onclick="setScore(this)">2</button>
-                            <button type="button" class="rubric-btn" onclick="setScore(this)">3</button>
-                            <button type="button" class="rubric-btn active" onclick="setScore(this)">4</button>
-                            <button type="button" class="rubric-btn" onclick="setScore(this)">5</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Dictado por Voz (Voice-to-Text) -->
-                <div class="voice-box">
-                    <div class="voice-topbar">
-                        <label style="font-size: 11px; font-weight: 700; color: var(--slate-900);">Feedback Expreso al Alumno:</label>
-                        <button type="button" class="btn-mic-record" id="btnMicTag" onclick="alternarVoz()">
-                            🎤 <span>Dictar por Voz (Sala)</span>
-                        </button>
-                    </div>
-                    <textarea class="voice-textarea" id="txtFeedbackVoz" placeholder="Pulsa el micrófono para dictar tus observaciones clínicas en tiempo real mientras pasas visita..."></textarea>
-                </div>
-            </div>
-
-            <div class="modal-bottom">
-                <button type="button" class="btn-cancel" onclick="cerrarMiniCex()">Cancelar</button>
-                <button type="button" class="btn-save-eval" onclick="guardarMiniCex()">Guardar Evaluación</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- SCRIPT DE INTERACCIÓN Y PROCESOS ASÍNCRONOS -->
-    <script>
-        let alumnoSeleccionado = "";
-        let speechRecognizer = null;
-        let grabacionActiva = false;
-
-        // Soporte nativo Web Speech API
-        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-            const SpeechAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
-            speechRecognizer = new SpeechAPI();
-            speechRecognizer.lang = 'es-CL';
-            speechRecognizer.continuous = true;
-            speechRecognizer.interimResults = true;
-
-            speechRecognizer.onresult = function(event) {
-                let trans = '';
-                for (let i = event.resultIndex; i < event.results.length; ++i) {
-                    trans += event.results[i][0].transcript;
+            // Recorrer solo a partir del índice que cambió en este evento
+            for (let i = event.resultIndex; i < event.results.length; ++i) {
+                if (event.results[i].isFinal) {
+                    transcriptFinalNuevo += event.results[i][0].transcript.trim() + ' ';
                 }
-                document.getElementById('txtFeedbackVoz').value = trans;
-            };
-
-            speechRecognizer.onerror = function() {
-                alternarVoz();
-            };
-        }
-
-        function alternarVoz() {
-            const btn = document.getElementById('btnMicTag');
-            if (!speechRecognizer) {
-                alert('El reconocimiento por voz no está disponible en este dispositivo. Puedes escribir el feedback manualmente.');
-                return;
             }
 
-            if (!grabacionActiva) {
+            // Si hay texto final procesado tras la pausa, concatenar acumulativamente
+            if (transcriptFinalNuevo.length > 0) {
+                const valorActual = textarea.value.trim();
+                
+                // Formateo: agregar espacio si ya existía texto previo
+                if (valorActual.length > 0) {
+                    textarea.value = valorActual + ' ' + transcriptFinalNuevo.trim();
+                } else {
+                    textarea.value = transcriptFinalNuevo.trim();
+                }
+                
+                // Auto-scroll al final del textarea para seguir el dictado
+                textarea.scrollTop = textarea.scrollHeight;
+            }
+        };
+
+        // Mantener la reconexión si el motor de voz se detiene involuntariamente por silencio prolongado
+        speechRecognizer.onend = function() {
+            if (grabacionActiva) {
+                try {
+                    speechRecognizer.start();
+                } catch (e) {
+                    console.warn('Reanudando reconocimiento de voz...', e);
+                }
+            }
+        };
+
+        speechRecognizer.onerror = function(event) {
+            console.error('Error en reconocimiento de voz:', event.error);
+            if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+                alternarVoz();
+                alert('⚠️ Permiso de micrófono denegado. Habilita el acceso en tu navegador.');
+            }
+        };
+    }
+
+    function alternarVoz() {
+        const btn = document.getElementById('btnMicTag');
+        if (!speechRecognizer) {
+            alert('El reconocimiento por voz no es compatible con este navegador. Puedes escribir el feedback manualmente.');
+            return;
+        }
+
+        if (!grabacionActiva) {
+            try {
                 speechRecognizer.start();
                 grabacionActiva = true;
                 btn.classList.add('recording');
-                btn.querySelector('span').innerText = 'Escuchando en sala...';
-            } else {
-                speechRecognizer.stop();
-                grabacionActiva = false;
-                btn.classList.remove('recording');
-                btn.querySelector('span').innerText = 'Dictar por Voz (Sala)';
+                btn.querySelector('span').innerText = 'Escuchando en sala... (Pausa libre)';
+            } catch (err) {
+                console.error("No se pudo iniciar el micrófono:", err);
             }
+        } else {
+            grabacionActiva = false;
+            speechRecognizer.stop();
+            btn.classList.remove('recording');
+            btn.querySelector('span').innerText = 'Dictar por Voz (Sala)';
         }
+    }
 
-        function abrirMiniCex(nombre) {
-            alumnoSeleccionado = nombre;
-            document.getElementById('modalStudentLabel').innerText = 'Mini-CEX: ' + nombre;
-            document.getElementById('txtFeedbackVoz').value = '';
-            document.getElementById('modalMiniCex').style.display = 'flex';
+    function abrirMiniCex(nombre) {
+        alumnoSeleccionado = nombre;
+        document.getElementById('modalStudentLabel').innerText = 'Mini-CEX: ' + nombre;
+        document.getElementById('txtFeedbackVoz').value = '';
+        document.getElementById('modalMiniCex').style.display = 'flex';
+    }
+
+    function cerrarMiniCex() {
+        if (grabacionActiva) alternarVoz();
+        document.getElementById('modalMiniCex').style.display = 'none';
+    }
+
+    function setScore(btn) {
+        const row = btn.parentElement;
+        row.querySelectorAll('.rubric-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+    }
+
+    function guardarMiniCex() {
+        if (grabacionActiva) alternarVoz();
+        alert('✅ Mini-CEX registrado para ' + alumnoSeleccionado + '.\nFeedback sincronizado automáticamente en la vista del alumno.');
+        cerrarMiniCex();
+    }
+
+    function delegarPEI(alumno, selectId) {
+        const asignado = document.getElementById(selectId).value;
+        alert('✅ Refuerzo de ' + alumno + ' delegado exitosamente a:\n' + asignado + '.\nNotificación de calendario enviada a ambas partes.');
+    }
+
+    function firmarActaMasiva() {
+        const confirmacion = confirm('¿Confirmas la firma digital y el envío inmediato del acta de rotación a la Secretaría Docente de Medicina Interna?');
+        if (confirmacion) {
+            document.getElementById('sync-pedro').innerHTML = '📩 Recibido por Secretaría';
+            document.getElementById('sync-pedro').style.color = '#16a34a';
+
+            document.getElementById('sync-camila').innerHTML = '📩 Recibido por Secretaría';
+            document.getElementById('sync-camila').style.color = '#16a34a';
+
+            alert('🚀 CIERRE DIGITAL EXITOSO:\n\n1. PDF generado con firma criptográfica del Dr. Silva.\n2. Sincronizado vía API con el sistema central de actas.\n3. Estado actualizado a: [Recibido por Secretaría].');
         }
-
-        function cerrarMiniCex() {
-            if (grabacionActiva) alternarVoz();
-            document.getElementById('modalMiniCex').style.display = 'none';
-        }
-
-        function setScore(btn) {
-            const row = btn.parentElement;
-            row.querySelectorAll('.rubric-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-        }
-
-        function guardarMiniCex() {
-            if (grabacionActiva) alternarVoz();
-            alert('✅ Mini-CEX registrado para ' + alumnoSeleccionado + '.\nFeedback sincronizado automáticamente en la vista del alumno.');
-            cerrarMiniCex();
-        }
-
-        // Delegación PEI
-        function delegarPEI(alumno, selectId) {
-            const asignado = document.getElementById(selectId).value;
-            alert('✅ Refuerzo de ' + alumno + ' delegado exitosamente a:\n' + asignado + '.\nNotificación de calendario enviada a ambas partes.');
-        }
-
-        // Firma masiva de actas sin papel
-        function firmarActaMasiva() {
-            const confirmacion = confirm('¿Confirmas la firma digital y el envío inmediato del acta de rotación a la Secretaría Docente de Medicina Interna?');
-            if (confirmacion) {
-                document.getElementById('sync-pedro').innerHTML = '📩 Recibido por Secretaría';
-                document.getElementById('sync-pedro').style.color = '#16a34a';
-
-                document.getElementById('sync-camila').innerHTML = '📩 Recibido por Secretaría';
-                document.getElementById('sync-camila').style.color = '#16a34a';
-
-                alert('🚀 CIERRE DIGITAL EXITOSO:\n\n1. PDF generado con firma criptográfica del Dr. Silva.\n2. Sincronizado vía API con el sistema central de actas.\n3. Estado actualizado a: [Recibido por Secretaría].');
-            }
-        }
-    </script>
-</body>
-</html>
+    }
+</script>
